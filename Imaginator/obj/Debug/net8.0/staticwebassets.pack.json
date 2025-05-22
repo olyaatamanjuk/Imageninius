@@ -1,0 +1,53 @@
+{
+  "Files": [
+    {
+      "Id": "/Users/olha_atmamaniuk/RiderProjects/Imaginator/Imaginator/obj/Debug/net8.0/scopedcss/projectbundle/Imaginator.bundle.scp.css",
+      "PackagePath": "staticwebassets/Imaginator.bundle.scp.css"
+    },
+    {
+      "Id": "/Users/olha_atmamaniuk/RiderProjects/Imaginator/Imaginator/wwwroot/app.css",
+      "PackagePath": "staticwebassets/app.css"
+    },
+    {
+      "Id": "/Users/olha_atmamaniuk/RiderProjects/Imaginator/Imaginator/wwwroot/archives/59fb4692-f0b3-4d44-a0f6-8029d51cb508.zip",
+      "PackagePath": "staticwebassets/archives/59fb4692-f0b3-4d44-a0f6-8029d51cb508.zip"
+    },
+    {
+      "Id": "/Users/olha_atmamaniuk/RiderProjects/Imaginator/Imaginator/wwwroot/archives/ab01f7b5-5208-4298-af14-91dc472a8b71.zip",
+      "PackagePath": "staticwebassets/archives/ab01f7b5-5208-4298-af14-91dc472a8b71.zip"
+    },
+    {
+      "Id": "/Users/olha_atmamaniuk/RiderProjects/Imaginator/Imaginator/wwwroot/archives/d64c9623-7765-4f73-a7b1-f2c711d84cf1.zip",
+      "PackagePath": "staticwebassets/archives/d64c9623-7765-4f73-a7b1-f2c711d84cf1.zip"
+    },
+    {
+      "Id": "/Users/olha_atmamaniuk/RiderProjects/Imaginator/Imaginator/wwwroot/bootstrap/bootstrap.min.css",
+      "PackagePath": "staticwebassets/bootstrap/bootstrap.min.css"
+    },
+    {
+      "Id": "/Users/olha_atmamaniuk/RiderProjects/Imaginator/Imaginator/wwwroot/bootstrap/bootstrap.min.css.map",
+      "PackagePath": "staticwebassets/bootstrap/bootstrap.min.css.map"
+    },
+    {
+      "Id": "/Users/olha_atmamaniuk/RiderProjects/Imaginator/Imaginator/wwwroot/favicon.png",
+      "PackagePath": "staticwebassets/favicon.png"
+    },
+    {
+      "Id": "obj/Debug/net8.0/staticwebassets/msbuild.Imaginator.Microsoft.AspNetCore.StaticWebAssets.props",
+      "PackagePath": "build\\Microsoft.AspNetCore.StaticWebAssets.props"
+    },
+    {
+      "Id": "obj/Debug/net8.0/staticwebassets/msbuild.build.Imaginator.props",
+      "PackagePath": "build\\Imaginator.props"
+    },
+    {
+      "Id": "obj/Debug/net8.0/staticwebassets/msbuild.buildMultiTargeting.Imaginator.props",
+      "PackagePath": "buildMultiTargeting\\Imaginator.props"
+    },
+    {
+      "Id": "obj/Debug/net8.0/staticwebassets/msbuild.buildTransitive.Imaginator.props",
+      "PackagePath": "buildTransitive\\Imaginator.props"
+    }
+  ],
+  "ElementsToRemove": []
+}

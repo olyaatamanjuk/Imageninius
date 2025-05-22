@@ -1,0 +1,321 @@
+@page "/images-processing"
+@rendermode InteractiveServer
+
+@using System.Collections.Generic
+@using System.Net.Http.Headers
+
+
+@inject IHttpClientFactory ClientFactory
+
+<h3>Завантаження зображень</h3>
+
+<InputFile OnChange="HandleSelectedFiles" multiple />
+<br />
+@if (processing)
+{
+    <p>Обробка архіву... Будь ласка, зачекайте.</p>
+}
+else if (archiveReady)
+{
+    //<a href="api/archive/@uploadId" download>Завантажити архів</a> 
+    <a href="api/archive/@uploadId" target="_blank">Завантажити архів</a>
+}
+else if (timeoutReached)
+{
+    <p>Час очікування вичерпано.</p>
+    <button @onclick="() => RefreshStatus(uploadId)">Спробувати знову</button>
+}
+else if (hasError)
+{
+    <p>Сталася помилка під час обробки. Спробуйте пізніше.</p>
+}
+
+@code {
+    [Inject] private IBackgroundProcessingQueue Queue { get; set; }
+    private bool isUploading = false;
+    private bool processing = false;
+    private bool archiveReady = false;
+    private int progress = 0;
+    private Guid uploadId;
+    private bool timeoutReached = false;
+    private bool hasError = false;
+
+    private async Task RefreshStatus(Guid id)
+    {
+        processing = true;
+        timeoutReached = false;
+        hasError = false;
+        await WaitForArchiveReady(id);
+    }
+    
+    private async Task WaitForArchiveReady(Guid id)
+    {
+        Console.WriteLine("🔵 WaitForArchiveReady стартував");
+        
+        int maxAttempts = 60;  // максимум 60 спроб
+        int attempt = 0;
+        int delayMs = 1000;    // початковий інтервал 1 секунда
+
+        processing = true;
+        archiveReady = false;
+        timeoutReached = false;
+        hasError = false;
+
+        while (attempt < maxAttempts)
+        {
+            try
+            {
+                var client = ClientFactory.CreateClient("serverAPI");
+                var status = await client.GetStringAsync($"api/archive/status/{id}");
+
+                if (status == "done")
+                {
+                    processing = false;
+                    archiveReady = true;
+                    StateHasChanged();
+                    return;
+                }
+                else if (status == "error")
+                {
+                    processing = false;
+                    hasError = true;
+                    StateHasChanged();
+                    return;
+                }
+            }
+            catch
+            {
+                // Якщо помилка запиту - теж позначимо помилку (або можна повторити)
+                processing = false;
+                hasError = true;
+                StateHasChanged();
+                return;
+            }
+
+            attempt++;
+
+            // Поступово збільшуємо інтервал, щоб зменшити навантаження
+            await Task.Delay(delayMs);
+            delayMs = Math.Min(delayMs + 500, 5000); // максимум 5 секунд між запитами
+
+            StateHasChanged(); // оновити UI, щоб показати індикатор або таймер
+        }
+
+        // Якщо дійшли сюди — час вичерпано
+        processing = false;
+        timeoutReached = true;
+        StateHasChanged();
+    }
+    
+  private async Task HandleSelectedFiles(InputFileChangeEventArgs e)
+{
+    Console.WriteLine("🔵 HandleSelectedFiles стартував");
+
+    isUploading = true;
+    processing = false;
+    archiveReady = false;
+    progress = 0;
+    hasError = false;
+    StateHasChanged();
+
+    
+    List<IBrowserFile> files;
+    try
+    {
+        files = e.GetMultipleFiles(1000).ToList();
+    }
+    catch (Exception ex)
+    {
+        hasError = true;
+        Console.WriteLine($"❌ Помилка при отриманні файлів: {ex.Message}");
+        isUploading = false;
+        StateHasChanged();
+        return;
+    }
+
+    // Обмеження на загальний розмір
+    long totalSize = files.Sum(f => f.Size);
+    const long maxTotalSize = 2L * 1024 * 1024 * 1024; //2GB
+    if (totalSize > maxTotalSize)
+    {
+        hasError = true;
+        isUploading = false;
+        Console.WriteLine("❌ Загальний розмір перевищує 1 GB");
+        StateHasChanged();
+        return;
+    }
+
+    var client = ClientFactory.CreateClient("serverAPI");
+
+    try
+    {
+       // var batches = files.Chunk(10).ToList();
+        int currentFile = 0;
+
+      
+            using var content = new MultipartFormDataContent();
+            
+            foreach (var file in files)
+            {
+                using var stream = file.OpenReadStream(1024 * 1024 * 50);
+                using var ms = new MemoryStream();
+                await stream.CopyToAsync(ms);
+                var fileBytes = ms.ToArray();
+
+                var byteContent = new ByteArrayContent(fileBytes);
+                byteContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(file.ContentType);
+
+                content.Add(byteContent, "files", file.Name);
+                
+                StateHasChanged();
+            }
+            
+            var response = await client.PostAsync("api/archive/upload", content);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                Console.WriteLine($"❌ Помилка при завантаженні батчу: {response.StatusCode}");
+                hasError = true;
+                return;
+            }
+
+            var raw = await response.Content.ReadAsStringAsync();
+            if (!Guid.TryParse(raw.Trim('"'), out uploadId))
+            {
+                Console.WriteLine("❌ Не вдалося розпарсити GUID");
+                hasError = true;
+                return;
+            }
+            
+            progress = (int)((double)currentFile / files.Count * 100);
+
+            Console.WriteLine($"✅ Батч завантажено. UploadId: {uploadId}");
+            StateHasChanged();
+        
+
+        processing = true;
+        Console.WriteLine("🟢 Чекаємо на готовність архіву...");
+        await WaitForArchiveReady(uploadId);
+    }
+    catch (Exception ex)
+    {
+        hasError = true;
+        Console.WriteLine($"❌ Виняток: {ex.Message}");
+    }
+    finally
+    {
+        isUploading = false;
+        StateHasChanged();
+    }
+}
+    
+
+/*private async Task HandleSelectedFiles(InputFileChangeEventArgs e)
+{
+    Console.WriteLine("🔵 HandleSelectedFiles стартував");
+
+    isUploading = true;
+    processing = false;
+    archiveReady = false;
+    progress = 0;
+    hasError = false;
+    StateHasChanged();
+
+    
+    List<IBrowserFile> files;
+    try
+    {
+        files = e.GetMultipleFiles(1000).ToList();
+    }
+    catch (Exception ex)
+    {
+        hasError = true;
+        Console.WriteLine($"❌ Помилка при отриманні файлів: {ex.Message}");
+        isUploading = false;
+        StateHasChanged();
+        return;
+    }
+
+    // Обмеження на загальний розмір
+    long totalSize = files.Sum(f => f.Size);
+    const long maxTotalSize = 2L * 1024 * 1024 * 1024; //2GB
+    if (totalSize > maxTotalSize)
+    {
+        hasError = true;
+        isUploading = false;
+        Console.WriteLine("❌ Загальний розмір перевищує 1 GB");
+        StateHasChanged();
+        return;
+    }
+
+    var client = ClientFactory.CreateClient("serverAPI");
+
+    try
+    {
+        var batches = files.Chunk(10).ToList();
+        int currentFile = 0;
+
+        foreach (var batch in batches)
+        {
+            Console.WriteLine("🔵 HandleSelectedFiles оброблює батч");
+            
+            using var content = new MultipartFormDataContent();
+
+            foreach (var file in batch)
+            {
+                await using var stream = file.OpenReadStream(1024 * 1024 * 50); // до 50MB
+                var memoryStream = new MemoryStream();
+                await stream.CopyToAsync(memoryStream);
+                memoryStream.Position = 0;
+
+                var streamContent = new StreamContent(memoryStream);
+                streamContent.Headers.ContentType = new MediaTypeHeaderValue(file.ContentType);
+                content.Add(streamContent, "files", file.Name);
+            }
+
+            Console.WriteLine("➡️ Відправка батчу...");
+            var response = await client.PostAsync("api/archive/upload", content);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                Console.WriteLine($"❌ Помилка при завантаженні батчу: {response.StatusCode}");
+                hasError = true;
+                return;
+            }
+
+            var raw = await response.Content.ReadAsStringAsync();
+            if (!Guid.TryParse(raw.Trim('"'), out uploadId))
+            {
+                Console.WriteLine("❌ Не вдалося розпарсити GUID");
+                hasError = true;
+                return;
+            }
+
+            currentFile += batch.Count();
+            progress = (int)((double)currentFile / files.Count * 100);
+
+            Console.WriteLine($"✅ Батч завантажено. UploadId: {uploadId}, Прогрес: {progress}%");
+            StateHasChanged();
+        }
+
+        processing = true;
+        Console.WriteLine("🟢 Чекаємо на готовність архіву...");
+        await WaitForArchiveReady(uploadId);
+    }
+    catch (Exception ex)
+    {
+        hasError = true;
+        Console.WriteLine($"❌ Виняток: {ex.Message}");
+    }
+    finally
+    {
+        isUploading = false;
+        StateHasChanged();
+    }
+}*/
+
+
+
+
+    
+}

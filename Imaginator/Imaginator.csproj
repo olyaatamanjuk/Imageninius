@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <Folder Include="wwwroot\archives\" />
+      <Folder Include="wwwroot\downloads\" />
+      <Folder Include="wwwroot\uploads\" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <_ContentIncludedByDefault Remove="wwwroot\uploads\47fa76c5-388c-4b16-8bf5-bed70b198e94\arty.fact.img_39269_A_blurred_abstract_dogs_nose_soft_pastel__c036f0a7-895d-4946-985c-55349e366600_3-gigapixel-standard v2-6000w.jpeg" />
+      <_ContentIncludedByDefault Remove="wwwroot\uploads\47fa76c5-388c-4b16-8bf5-bed70b198e94\arty.fact.img_39269_A_bottle_of_extravagant_perfumeHigh_quali_fd6415b6-9f7e-4f4c-a746-7e69ea021ed9_2-gigapixel-standard v2-6000w.jpeg" />
+      <_ContentIncludedByDefault Remove="wwwroot\uploads\7141a9d3-6b03-4d9e-a570-c39a41daa300\arty.fact.img_39269_A_blurred_abstract_dogs_nose_soft_pastel__c036f0a7-895d-4946-985c-55349e366600_3-gigapixel-standard v2-6000w.jpeg" />
+      <_ContentIncludedByDefault Remove="wwwroot\uploads\7141a9d3-6b03-4d9e-a570-c39a41daa300\arty.fact.img_39269_A_bottle_of_extravagant_perfumeHigh_quali_fd6415b6-9f7e-4f4c-a746-7e69ea021ed9_2-gigapixel-standard v2-6000w.jpeg" />
+    </ItemGroup>
+
+</Project>
