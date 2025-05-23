@@ -7,8 +7,6 @@
 @using System.Text.Json
 
 
-@inject IHttpClientFactory ClientFactory
-
 <h3>Завантаження зображень</h3>
 
 <!-- Вибір файлів -->
@@ -181,6 +179,16 @@ else if (hasError)
     private bool ShowPromptingSection = false;
     private IBrowserFile? selectedFile;
     private string? downloadUrl;
+    
+    [Inject]
+    public IHttpClientFactory ClientFactory { get; set; }
+
+    private HttpClient httpClient;
+
+    protected override void OnInitialized()
+    {
+        httpClient = ClientFactory.CreateClient("serverAPI");
+    }
 
     private async Task RefreshStatus(Guid id)
     {
@@ -207,8 +215,7 @@ else if (hasError)
         {
             try
             {
-                var client = ClientFactory.CreateClient("serverAPI");
-                var status = await client.GetStringAsync($"api/archive/status/{id}");
+                var status = await httpClient.GetStringAsync($"api/archive/status/{id}");
 
                 if (status == "done")
                 {
@@ -281,8 +288,7 @@ else if (hasError)
           StateHasChanged();
           return;
       }
-
-      var client = ClientFactory.CreateClient("serverAPI");
+      
 
       try
       {
@@ -317,7 +323,7 @@ else if (hasError)
                   _FileInfo.File = file;
                   _FileInfo.Base64 = base64;
                   _FileInfo.Name = file.Name;
-                  _FileInfo.MetadataForStock.Prompt = await _FileInfo.MetadataForStock.GetPromptFromMetadata(_FileInfo);
+                  //_FileInfo.MetadataForStock.Prompt = await _FileInfo.MetadataForStock.GetPromptFromMetadata(_FileInfo);
                     
                   ListOfFiles.Add(_FileInfo);
                   
@@ -328,7 +334,7 @@ else if (hasError)
 
               ShowProgress = false;
 
-              var response = await client.PostAsync("api/archive/uploadfiles", content);
+              var response = await httpClient.PostAsync("api/archive/uploadfiles", content);
 
               if (!response.IsSuccessStatusCode)
               {
@@ -543,16 +549,15 @@ private async Task ProcessImages()
         StateHasChanged();
 
         int processed = 0;
-
+        var tasks = new List<Task>();
         foreach (FullFileInfo _fullFileInfo in ListOfFiles)
         {
             SelectedFileInfo = _fullFileInfo;
 
             try
             {
-                //SelectedFileInfo.MetadataForStock.Prompt = await SelectedFileInfo.MetadataForStock.GetPromptFromMetadata(SelectedFileInfo);
+                //tasks.Add(SendPrompt());
                 await SendPrompt();
-                await ApplyMetadata();
             }
             catch (Exception ex)
             {
@@ -567,12 +572,14 @@ private async Task ProcessImages()
             StateHasChanged();
         }
 
+       // await Task.WhenAll(tasks);
+        
+        await ApplyMetadata();
+
         ButtonClickMessage = "Формується архів...";
         StateHasChanged();
 
         await Task.Yield();
-        
-        var client = ClientFactory.CreateClient("serverAPI"); 
         
         List<FileInfoSimple> ListOfFilesSimple = ListOfFiles
             .Select(f => new FileInfoSimple
@@ -583,20 +590,13 @@ private async Task ProcessImages()
             })
             .ToList();
         
-       // var content = new MultipartFormDataContent();
-        
-
-        // Додаємо метадані у форматі JSON
-       // var metadataJson = JsonSerializer.Serialize(ListOfFilesSimple);
-       // content.Add(new StringContent(metadataJson, Encoding.UTF8, "application/json"), "metadata");
-
         // Надсилаємо запит
         
         var json = JsonSerializer.Serialize(ListOfFilesSimple);
         Console.WriteLine(json);
-        var responseCSV    = await client.PostAsJsonAsync($"api/archive/createcsv/{uploadId}", ListOfFilesSimple);
+        var responseCSV    = await httpClient.PostAsJsonAsync($"api/archive/createcsv/{uploadId}", ListOfFilesSimple);
         
-        var response = await client.GetStringAsync($"api/archive/uploadzip/{uploadId}");
+        var response = await httpClient.GetStringAsync($"api/archive/uploadzip/{uploadId}");
 
         if (response.ToString() != "OK")
         {
@@ -617,9 +617,6 @@ private async Task ApplyMetadata()
     if (SelectedFileInfo == null)
         return;
     
-    //using var content = new MultipartFormDataContent();
-    
-    var client = ClientFactory.CreateClient("serverAPI");  
     List<FileInfoSimple> ListOfFilesSimple = ListOfFiles
         .Select(f => new FileInfoSimple
         {
@@ -629,7 +626,7 @@ private async Task ApplyMetadata()
         })
         .ToList();
 
-    var response = await client.PostAsJsonAsync($"api/archive/setmetadata/{uploadId}", ListOfFilesSimple);
+    var response = await httpClient.PostAsJsonAsync($"api/archive/setmetadata/{uploadId}", ListOfFilesSimple);
 }
 
   private string Prompt { get; set; } = @"Act as a professional stock content expert with deep knowledge of visual trends, keyword optimization, and commercial relevance. Your task is to analyze the uploaded image and generate a structured stock-ready output in valid JSON format, using the most accurate and up-to-date stock terminology.
