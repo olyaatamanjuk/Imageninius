@@ -23,9 +23,34 @@
     <button class="btn btn-danger" @onclick="() => ClearAll(true)" >Очистити</button>
     @if (archiveReady)
     {
-    <a href="api/archive/@uploadId" class="btn btn-primary" target="_blank">Завантажити архів</a>
+        <a href="api/archive/@uploadId" class="btn btn-primary" target="_blank">Завантажити архів</a>
     }
 </div>
+
+<h3>Додаткові опції:</h3>
+
+<div>
+    <label>
+        <input type="checkbox" @bind="ReadAndUseMetadataFromFiles" />
+        Використовувати для опису метадані з файлів
+    </label>
+</div>
+
+<div>
+    <label>
+        <input type="checkbox" @bind="SeparatePhotosAndImages" />
+        Розділити на папки фото та ілюстрації
+    </label>
+</div>
+
+<div>
+    <label>
+        <input type="checkbox" @bind="AnalyzeStockKeywords" />
+        Вивести окремо чи це ізолят і т.д.
+    </label>
+</div>
+
+<hr />
 
 <div>
     <p>
@@ -102,6 +127,42 @@ else if (hasError)
                     <label for="keywords" class="form-label">Ключові слова</label>
                     <InputTextArea id="keywords" class="form-control" @bind-Value="SelectedFileInfo.MetadataForStock.Keywords" placeholder="Введіть ключові слова через кому" rows="3"/>
                 </div>
+                
+                @if (AnalyzeStockKeywords)
+                {
+                    <div class="form-group mb-3">
+                        <label for="headline" class="form-label">Тип зображення</label>
+                        <InputText id="headline" class="form-control" @bind-Value="SelectedFileInfo.MetadataForStock.ContentType" placeholder="Введіть тип контенту (фото чи ілюстрація)"/>
+                    </div>  
+                }
+
+                @if (AnalyzeStockKeywords)
+                {
+                    <div>
+                        <label>
+                            <input type="checkbox" @bind="SelectedFileInfo.MetadataForStock.Isolated" />
+                            Isolated
+                        </label>
+                    </div>
+                    <div>
+                        <label>
+                            <input type="checkbox" @bind="SelectedFileInfo.MetadataForStock.CopySpace" />
+                            Copy Space
+                        </label>  
+                    </div>
+                    <div>
+                        <label>
+                            <input type="checkbox" @bind="SelectedFileInfo.MetadataForStock.Mockup" />
+                            Mockup
+                        </label> 
+                    </div>
+                    <div>
+                        <label>
+                            <input type="checkbox" @bind="SelectedFileInfo.MetadataForStock.CutOut" />
+                            Cut Out
+                        </label>  
+                    </div>
+                }
                 
 
                 @if (downloadUrl != null)
@@ -180,6 +241,10 @@ else if (hasError)
     private bool ShowPromptingSection = false;
     private IBrowserFile? selectedFile;
     private string? downloadUrl;
+
+    private bool ReadAndUseMetadataFromFiles = true;
+    private bool SeparatePhotosAndImages = true;
+    private bool AnalyzeStockKeywords = true;
     
     [Inject]
     public IHttpClientFactory ClientFactory { get; set; }
@@ -619,19 +684,33 @@ private async Task ProcessImages()
         Console.WriteLine(json);
         var responseCSV    = await httpClient.PostAsJsonAsync($"api/archive/createcsv/{uploadId}", ListOfFilesSimple);
         
-        var response = await httpClient.GetStringAsync($"api/archive/uploadzip/{uploadId}");
+        var response = await httpClient.PostAsJsonAsync($"api/archive/uploadzip/{uploadId}", ListOfFilesSimple);
 
-        if (response.ToString() != "OK")
+        
+        if (!response.IsSuccessStatusCode)
         {
-            Console.WriteLine($"❌ Помилка при завантаженні батчу");
-            hasError = true;
+             Console.WriteLine($"❌ Помилка при завантаженні батчу");
+             hasError = true;
             return;
-        }
-        else
+         }
+         else
         {
-            Console.WriteLine($" Запущено моніторинг результату");
-            await WaitForArchiveReady(uploadId);   
+             Console.WriteLine($" Запущено моніторинг результату");
+             await WaitForArchiveReady(uploadId);   
         }
+        
+        
+        // if (response.ToString() != "OK")
+        // {
+        //     Console.WriteLine($"❌ Помилка при завантаженні батчу");
+        //     hasError = true;
+        //     return;
+        // }
+        // else
+        // {
+        //     Console.WriteLine($" Запущено моніторинг результату");
+        //     await WaitForArchiveReady(uploadId);   
+        // }
     }
 }
 
@@ -687,7 +766,17 @@ Your response must include the following fields:
 
 ""description"" – A clear, medium-length description (2–3 sentences) that highlights the visual content, composition, colors, emotions, and possible commercial applications (maximum 150 characters, it is strong rule!).
 
-""keywords"" – CSV formatted string with default separator (a comma) :exactly 30 highly relevant, trend-aware, and stock-optimized keywords, including popular search terms like ""isolated"", ""copy space"", ""cut out"", ""flat lay"", ""top view"", ""minimalist"", ""authentic"", ""trendy"", ""vibrant colors"", ""clean design"", etc., depending on the image content. Analyze the image and choose the most suitable ones";
+ ""keywords"" – CSV formatted string with default separator (a comma): exactly 30 keywords that are strictly based on the actual visual content of the image. Include only highly relevant, specific, and stock-optimized terms. Use words like ""isolated"", ""copy space"", ""cut out"", ""mockup"", ""flat lay"", ""top view"", ""minimalist"", ""authentic"", ""trendy"", ""vibrant colors"", ""clean design"", etc., only if they are clearly visible and appropriate for the image. Do not guess or assume — include only what is visually and contextually accurate.";
+
+
+  private string PromptSpecialKeywords { get; set; } = @"
+""isolated"" – true/false — Is the object isolated on a white or transparent background, with no surrounding elements or shadows?
+""copyspace"" – true/false — Does the image include intentional empty space for adding text or logos?
+""mockup"" – true/false — Does the image contain a mockup element (e.g., screen, t-shirt, mug) designed to showcase custom content or design?
+""cutout"" – true/false — Is the object completely cut out from the background, possibly on a transparent background?";
+
+  private string PromptImageType { get; set; } = @"
+""contentType"" – photo/illustration";
 
     private string Response { get; set; } = string.Empty;
     private bool IsLoading { get; set; } = false;
@@ -704,7 +793,17 @@ Your response must include the following fields:
         {
             string _promtforgemmini = Prompt;
 
-            if (!string.IsNullOrEmpty(SelectedFileInfo.MetadataForStock.Prompt))
+            if (AnalyzeStockKeywords)
+            {
+                _promtforgemmini = _promtforgemmini + PromptSpecialKeywords;
+            }
+            
+            if (SeparatePhotosAndImages)
+            {
+                _promtforgemmini = _promtforgemmini + PromptImageType;
+            }
+
+            if (ReadAndUseMetadataFromFiles && !string.IsNullOrEmpty(SelectedFileInfo.MetadataForStock.Prompt))
             {
                 _promtforgemmini = _promtforgemmini +  "\n\n For better context, here is the prompt used to generate the image:" + SelectedFileInfo.MetadataForStock.Prompt;
             }
@@ -716,6 +815,20 @@ Your response must include the following fields:
             SelectedFileInfo.MetadataForStock.Caption = resultDict.GetValueOrDefault("description").ToString();
             SelectedFileInfo.MetadataForStock.Category = Int32.Parse(resultDict.GetValueOrDefault("category").ToString());
             SelectedFileInfo.MetadataForStock.CategoryName = resultDict.GetValueOrDefault("categoryName").ToString();
+
+            if (AnalyzeStockKeywords)
+            {
+                SelectedFileInfo.MetadataForStock.Isolated = bool.Parse(resultDict.GetValueOrDefault("isolated").ToString());
+                SelectedFileInfo.MetadataForStock.CutOut = bool.Parse(resultDict.GetValueOrDefault("cutout").ToString());
+                SelectedFileInfo.MetadataForStock.CopySpace = bool.Parse(resultDict.GetValueOrDefault("copyspace").ToString());
+                SelectedFileInfo.MetadataForStock.Mockup = bool.Parse(resultDict.GetValueOrDefault("mockup").ToString());
+            }
+
+            if (SeparatePhotosAndImages)
+            {
+                SelectedFileInfo.MetadataForStock.ContentType = resultDict.GetValueOrDefault("contentType").ToString();
+            }
+            
             
             //   string json = await Gemini.GetAnswer(filePath, apiKey, Prompt);
             //resultDict = await Gemini.GetAnswerD(filePath, apiKey, Prompt);

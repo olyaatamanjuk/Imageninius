@@ -26,15 +26,45 @@ public class BackgroundArchiveWorker : BackgroundService
 
                 while (!stoppingToken.IsCancellationRequested)
                 {
-                    var uploadId = await _queue.DequeueAsync(stoppingToken);
+                    var currentTask = await _queue.DequeueAsync(stoppingToken);
+                    
+                    var uploadId = currentTask.UploadId;
+                    var listSimpleFileInfos = currentTask.ItemsFullInfoSimples;
+                    
+                    
+                   // var uploadId = await _queue.DequeueAsync(stoppingToken);
                     Console.WriteLine($"📦 Починаємо обробку архіву: {uploadId}");
 
                     // Очікуємо завдання з черги асинхронно
 
                     _status.SetStatus(uploadId, "processing");
+                    
+                 
 
                     var inputFolder = Path.Combine(_env.WebRootPath, "uploads", uploadId.ToString());
                     var archiveFolder = Path.Combine(_env.WebRootPath, "archives");
+                    
+                    
+                    var uniqueContentTypes = listSimpleFileInfos
+                        .Where(x => !string.IsNullOrWhiteSpace(x.MetadataForStock.ContentType))
+                        .Select(x => x.MetadataForStock.ContentType)
+                        .Distinct()
+                        .ToList();
+
+                    if (uniqueContentTypes.Count > 1)
+                    {
+                        foreach (var contentType in uniqueContentTypes)
+                        {
+                           var newFolderPath = Path.Combine(inputFolder, contentType); 
+                           Directory.CreateDirectory(newFolderPath);
+                        }
+
+                        foreach (var fileInfoSimple in listSimpleFileInfos)
+                        {
+                            File.Move( Path.Combine(inputFolder, fileInfoSimple.Name),  Path.Combine(inputFolder, fileInfoSimple.MetadataForStock.ContentType, fileInfoSimple.Name));
+                        }
+                        
+                    }
                     
                     Directory.CreateDirectory(archiveFolder);
 

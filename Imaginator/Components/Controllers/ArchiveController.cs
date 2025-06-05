@@ -41,8 +41,11 @@ public class ArchiveController : ControllerBase
             await file.CopyToAsync(stream);
         }
 
+        var currenttask = new UploadTask();
+        currenttask.UploadId = uploadId;
+
         // Додаємо в чергу ТУТ, коли файли точно збережено
-        await _queue.EnqueueAsync(uploadId);
+        await _queue.EnqueueAsync(currenttask);
         Console.WriteLine($"✅ Upload {uploadId} додано в чергу (із контролера)");
 
         return Ok(uploadId);
@@ -160,15 +163,36 @@ public class ArchiveController : ControllerBase
         return Ok(uploadId);
     }
     
-    [HttpGet("uploadzip/{id}")]
-    public async Task<IActionResult> UploadZip(Guid id)
+    // [HttpGet("uploadzip/{id}")]
+    // public async Task<IActionResult> UploadZip(Guid id)
+    // {
+    //     // Додаємо в чергу ТУТ, коли файли точно збережено
+    //     await _queue.EnqueueAsync(id);
+    //     Console.WriteLine($"✅ Upload {id} додано в чергу (із контролера)");
+    //
+    //     return Ok("OK");
+    // }
+    
+    [HttpPost("uploadzip/{id}")]
+    public async Task<IActionResult>  UploadZip(Guid id, [FromBody] List<FileInfoSimple> files)
     {
+        
         // Додаємо в чергу ТУТ, коли файли точно збережено
-        await _queue.EnqueueAsync(id);
+        var currenttask = new UploadTask();
+
+        currenttask.UploadId = id;
+        currenttask.ItemsFullInfoSimples = files;
+        
+        await _queue.EnqueueAsync(currenttask);
         Console.WriteLine($"✅ Upload {id} додано в чергу (із контролера)");
 
         return Ok("OK");
+        
+        return Ok();
     }
+    
+    
+    
     
     [HttpPost("createcsv/{id}")]
     public async Task<IActionResult>  CreateCsv(Guid id, [FromBody] List<FileInfoSimple> files)

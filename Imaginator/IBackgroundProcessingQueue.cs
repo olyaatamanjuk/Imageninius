@@ -2,6 +2,6 @@ namespace Imaginator;
 
 public interface IBackgroundProcessingQueue
 {
-    Task EnqueueAsync(Guid uploadId);
-    Task<Guid> DequeueAsync(CancellationToken cancellationToken);
+    Task EnqueueAsync(UploadTask task);
+    Task<UploadTask> DequeueAsync(CancellationToken cancellationToken);
 }

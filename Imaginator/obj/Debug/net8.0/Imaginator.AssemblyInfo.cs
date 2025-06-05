@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Imaginator")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+4f6a89e371588b5ac885df6a2c9273ea6dd7f763")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+bfd7488ca4c868b2c660571967142b9d967e84ee")]
 [assembly: System.Reflection.AssemblyProductAttribute("Imaginator")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Imaginator")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

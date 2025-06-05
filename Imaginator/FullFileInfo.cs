@@ -13,6 +13,7 @@ public class FullFileInfo: FileInfoSimple
    
     public string DownloadUrl { get; set; }
     public string FullPath { get; set; }
+    
 
     public FullFileInfo()
     {

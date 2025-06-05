@@ -29,7 +29,7 @@ public class ImageUploadService : IImageUploadService
         }
 
         // Додаємо в чергу на обробку
-        await _queue.EnqueueAsync(uploadId);
+       // await _queue.EnqueueAsync(uploadId);
 
         return uploadId;
     }

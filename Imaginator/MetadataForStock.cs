@@ -11,7 +11,15 @@ public class Metadata
     public string Keywords { get; set; } = "";
     public string Prompt { get; set; } = "";
     public string CategoryName { get; set; } = "";
+    
+    public string ContentType { get; set; } = "";
     public int Category { get; set; }
+    
+    public bool Isolated { get; set; }
+    public bool CopySpace  { get; set; }
+    public bool Mockup  { get; set; }
+    public bool CutOut  { get; set; }
+    
 
     public async Task<string> GetPromptFromMetadata(FullFileInfo _fileInfo)
     {
