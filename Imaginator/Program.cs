@@ -38,6 +38,15 @@ builder.Services.Configure<FormOptions>(options =>
     options.MultipartBodyLengthLimit = 2L * 1024L * 1024L * 1024L; // 2 GB
 });
 
+builder.Services.AddServerSideBlazor()
+    .AddHubOptions(options =>
+    {
+        options.ClientTimeoutInterval = TimeSpan.FromMinutes(10);
+        options.HandshakeTimeout = TimeSpan.FromMinutes(2);
+        options.KeepAliveInterval = TimeSpan.FromMinutes(2);
+        options.MaximumReceiveMessageSize = 200 * 1024 * 1024; // до 200 MB
+    });
+
 builder.Host.ConfigureAppConfiguration((hostingContext, config) =>
 {
     config.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);

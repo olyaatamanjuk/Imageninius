@@ -17,10 +17,20 @@ public class Gemini
         if (string.IsNullOrWhiteSpace(geminiPromt)) geminiPromt = "Опиши, що зображено на фото.";
 
         using var httpClient = new HttpClient();
+        
         var mimeType =
-            "image/jpeg"; // Актуально для JPEG. За потреби: image/png                                                                
-        var fileName = fullFileInfo.File.Name;
-        byte[] fileBytes = Convert.FromBase64String(fullFileInfo.Base64);
+            "image/jpeg"; // Актуально для JPEG. За потреби: image/png  
+        
+        var fileName = fullFileInfo.File.Name;  
+        
+        
+        using var stream = fullFileInfo.File.OpenReadStream(Const.MaxFileSize);
+        using var memoryStream = new MemoryStream();
+        await stream.CopyToAsync(memoryStream);
+        byte[] fileBytes = memoryStream.ToArray();
+        
+        
+       // byte[] fileBytes = await File.ReadAllBytesAsync(fullFileInfo.File.Name);
 
         // Крок 1: Завантаження зображення                                                                                                       
         var startUrl = $"https://generativelanguage.googleapis.com/upload/v1beta/files?key={apiKey}";

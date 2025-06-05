@@ -138,6 +138,7 @@ public class ArchiveController : ControllerBase
     }
     */
     
+    [DisableRequestSizeLimit]
     [HttpPost("uploadfiles")]
     public async Task<IActionResult> UploadFiles(List<IFormFile> files)
     {

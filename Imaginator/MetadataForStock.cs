@@ -79,9 +79,9 @@ public class Metadata
                 var xmp = xmpDir.XmpMeta;
                 // Варіант 1: Пошук локалізованої версії (en-US або без мови)
                 var localizedDescription =
-                    xmp.GetLocalizedText("http://purl.org/dc/elements/1.1/", "description", null, "en-US");
+                    xmp?.GetLocalizedText("http://purl.org/dc/elements/1.1/", "description", null, "en-US");
 
-                if (localizedDescription != null & !string.IsNullOrEmpty(localizedDescription.ToString()))
+                if (localizedDescription != null && !string.IsNullOrEmpty(localizedDescription?.ToString()))
                 {
                     _prompt = localizedDescription.ToString();
                     return _prompt;
