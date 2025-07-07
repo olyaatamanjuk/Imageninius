@@ -63,7 +63,25 @@ public class BackgroundArchiveWorker : BackgroundService
                         {
                             File.Move( Path.Combine(inputFolder, fileInfoSimple.Name),  Path.Combine(inputFolder, fileInfoSimple.MetadataForStock.ContentType, fileInfoSimple.Name));
                         }
-                        
+                    }
+                    
+                    var isolatedFolderPath = Path.Combine(inputFolder, "isolated"); 
+                    Directory.CreateDirectory(isolatedFolderPath);
+                            
+                    foreach (var fileInfoSimple in listSimpleFileInfos)
+                    {
+                        if (fileInfoSimple.MetadataForStock.Isolated)
+                        {
+                            try
+                            {
+                                File.Move( Path.Combine( Path.Combine(inputFolder, fileInfoSimple.MetadataForStock.ContentType, fileInfoSimple.Name)), Path.Combine(isolatedFolderPath, fileInfoSimple.Name)); 
+                            }
+                            catch (Exception e)
+                            {
+                                File.Move( Path.Combine( Path.Combine(inputFolder, fileInfoSimple.Name)), Path.Combine(isolatedFolderPath, fileInfoSimple.Name));
+                            }
+                            
+                        }
                     }
                     
                     Directory.CreateDirectory(archiveFolder);

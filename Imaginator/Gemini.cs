@@ -76,7 +76,8 @@ public class Gemini
 
         // Крок 2: Виклик Gemini з file_uri (через v1beta)                                                                                       
         var geminiUrl =
-            $"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={apiKey}";
+            $"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={apiKey}";
+        
         var payload = new
         {
             contents = new[]

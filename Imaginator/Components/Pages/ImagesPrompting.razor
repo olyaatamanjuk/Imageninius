@@ -671,13 +671,13 @@ Your task is to:
    - Camera angle, composition, lighting (soft, harsh, ambient, cinematic, etc.)
    - Color palette and mood (warm, cold, pastel, vibrant, gloomy, etc.)
    - Textures, materials, background details, and focus depth
-2. Write a prompt for MidJourney v6 that recreates this image as precisely as possible.
+2. Write a prompt for MidJourney v7 that recreates this image as precisely as possible.
 3. Use structured prompt syntax:
-   - Start with the **main subject**
-   - Add **adjectives** describing the subject
-   - Include **environment/setting**
-   - Specify **art style**
-   - Add **lighting & mood descriptors**
+   - Start with the main subject
+   - Add adjectives describing the subject very detailed
+   - Include environment/setting
+   - Specify art style
+   - Add lighting & mood descriptors
    - If it is a photo - Add the one of the best camera and light , for example: Shot with Nikon D850, 35mm lens, soft daylight
    - Finish with only two **MidJourney parameters** : ratio (Determine the file's width and height, then calculate the aspect ratio and define the corresponding --ar parameter accordingly) and quality (always ""--q 4"")
 
@@ -698,7 +698,6 @@ Your response must be a structured stock-ready output in valid JSON format, incl
         if (string.IsNullOrWhiteSpace(Prompt)) return;
 
         IsLoading = true;
-        Response = "";
 
         try
         {
@@ -726,7 +725,8 @@ Your response must be a structured stock-ready output in valid JSON format, incl
         }
         catch (Exception ex)
         {
-            Response = $"❌ Помилка: {ex.Message}";
+            ButtonClickMessage = $"❌ Помилка: {ex.Message}";
+            StateHasChanged();
         }
         finally
         {
